@@ -1,14 +1,14 @@
 package com.darian.financemanagement.controller;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class HomeController {
+public class PageController {
 
-    @GetMapping("/home")
-    public String home(Model model) {
-        model.addAttribute("name", "Đức Anh");
-        return "index";
+    @GetMapping({"/add"})
+    public String addPage() {
+        return "add";
     }
 }

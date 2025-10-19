@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add Transaction</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+
+
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .form-container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .form-label {
+      font-weight: 500;
+    }
+    input[type="number"] {
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<div class="form-container">
+  <h4 class="text-center mb-4">➕ Add Transaction</h4>
+
+  <form id="transactionForm">
+    <!-- Date -->
+    <div class="mb-3">
+      <label for="date" class="form-label">Date</label>
+      <input type="date" id="date" name="date" class="form-control" required />
+    </div>
+
+    <!-- Time -->
+    <div class="mb-3">
+      <label for="time" class="form-label">Time</label>
+      <input type="time" id="time" name="time" class="form-control" />
+    </div>
+
+    <!-- Transaction -->
+    <div class="mb-3">
+      <label for="transaction" class="form-label">Transaction</label>
+      <input type="text" id="transaction" name="transaction" class="form-control" placeholder="e.g. Mua cà phê" required autofocus />
+    </div>
+
+    <!-- Group -->
+    <div class="mb-3">
+      <label for="group" class="form-label">Group</label>
+      <select id="group" name="group" class="form-select" required>
+        <option value="">-- Select Group --</option>
+        <option value="Needs">Needs</option>
+        <option value="Wants">Wants</option>
+        <option value="Savings">Savings</option>
+      </select>
+    </div>
+
+    <!-- Subgroup -->
+    <div class="mb-3">
+      <label for="subgroup" class="form-label">Subgroup</label>
+      <select id="subgroup" name="subgroup" class="form-select" required>
+        <option value="">-- Select Subgroup --</option>
+      </select>
+    </div>
+
+    <!-- Category -->
+    <div class="mb-3">
+      <label for="category" class="form-label">Category</label>
+      <input type="text" id="category" name="category" class="form-control" placeholder="Type or select..." />
+      <datalist id="categoryList"></datalist>
+    </div>
+
+    <!-- Amount -->
+    <div class="mb-3">
+      <label for="amount" class="form-label">Amount ( Nghìn Đồng )</label>
+      <input type="text" id="amount" name="amount" class="form-control" inputmode="numeric" required />
+    </div>
+
+    <!-- Note -->
+    <div class="mb-3">
+      <label for="note" class="form-label">Note (optional)</label>
+      <textarea id="note" name="note" class="form-control" rows="2" placeholder="Any additional info..."></textarea>
+    </div>
+
+    <!-- Buttons -->
+    <div class="d-flex justify-content-between mt-4">
+      <button type="reset" class="btn btn-outline-secondary">Reset</button>
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+  </form>
+</div>
+
+<script>
+
+</script>
+
+<!-- logic add form -->
+<script type="module" src="/js/add.js"></script>
+</body>
+</html>

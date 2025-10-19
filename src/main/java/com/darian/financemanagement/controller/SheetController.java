@@ -16,7 +16,6 @@ public class SheetController {
     private final GoogleSheetsService sheetsService = new GoogleSheetsService();
 
     private static final String SPREADSHEET_ID = Config.extractSpreadsheetId(Config.SPREADSHEET_URL);
-
     private static final String RANGE = "test1!A1:C5";
 
     @GetMapping("/read-sheet")

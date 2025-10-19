@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body th:replace="layout :: layout(~{::content})">
+
+<th:block th:fragment="content">
+
+    <div class="row text-center mb-4">
+        <h2>Dashboard</h2>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Tổng chi tháng này</h6>
+                    <h3 class="text-primary">₫5,340,000</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Chi hôm nay</h6>
+                    <h3 class="text-success">₫250,000</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Giao dịch gần nhất</h6>
+                    <h3 class="text-danger">2</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+
+</body>
+</html>
