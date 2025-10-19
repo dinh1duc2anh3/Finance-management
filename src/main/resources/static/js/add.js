@@ -126,10 +126,22 @@ function setupFormSubmit() {
     elements.form.addEventListener("submit", e => {
         e.preventDefault();
         const formData = Object.fromEntries(new FormData(elements.form).entries());
-        console.log("Submitted:", formData);
-        alert("Transaction saved!");
-        elements.form.reset();
-        setupDateTime();
+
+        fetch('/append', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        })
+        .then(res => res.text()) // ⚠️ Controller trả về String, nên dùng .text()
+        .then(msg => {
+            console.log("✅ Submitted:", msg);
+            alert(msg || "Transaction saved!");
+            resetForm();
+        })
+        .catch(err => {
+            console.error('❌ Error:', err);
+            alert("❌ Failed to save transaction!");
+        });
     });
 }
 

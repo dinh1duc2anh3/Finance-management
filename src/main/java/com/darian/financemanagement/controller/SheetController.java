@@ -16,7 +16,7 @@ public class SheetController {
     private final GoogleSheetsService sheetsService = new GoogleSheetsService();
 
     private static final String SPREADSHEET_ID = Config.extractSpreadsheetId(Config.SPREADSHEET_URL);
-    private static final String RANGE = "test1!A1:C5";
+    private static final String RANGE = "test1!A:H";
 
     @GetMapping("/read-sheet")
     public List<List<Object>> readSheet() throws Exception {
@@ -26,9 +26,8 @@ public class SheetController {
     @PostMapping("/append")
     public String appendRow(@RequestBody ExpenseRequest request)
             throws IOException, GeneralSecurityException {
-
         sheetsService.appendData(SPREADSHEET_ID, RANGE, request);
 
-        return "✅ Row added successfully for " + request.getName();
+        return "✅ Row added successfully: " + request.getTransaction()  + " on " + request.getDate()+ " "+ request.getTime();
     }
 }

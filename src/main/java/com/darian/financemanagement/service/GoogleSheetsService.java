@@ -47,16 +47,21 @@ public class GoogleSheetsService {
         return response.getValues();
     }
 
-    public void appendData(String spreadsheetId, String range, ExpenseRequest request) throws IOException, GeneralSecurityException {
+    public void appendData(String spreadsheetId, String range, ExpenseRequest request)
+            throws IOException, GeneralSecurityException {
         Sheets service = getSheetsService();
 
         List<Object> rowData = List.of(
-                request.getName(),
-                request.getExpense(),
-                request.getDate()
+                request.getDate(),
+                request.getTime(),
+                request.getTransaction(),
+                request.getGroup(),
+                request.getSubgroup(),
+                request.getCategory(),
+                request.getAmount(),
+                request.getNote()
         );
 
-        // range ví dụ: "Sheet1!A:C"
         ValueRange appendBody = new ValueRange()
                 .setValues(Collections.singletonList(rowData));
 
@@ -66,7 +71,5 @@ public class GoogleSheetsService {
                 .execute();
 
         System.out.println("✅ Data appended successfully: " + response.getUpdates().getUpdatedRange());
-
     }
-
 }
