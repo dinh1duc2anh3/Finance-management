@@ -11,8 +11,10 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
@@ -22,9 +24,20 @@ public class GoogleSheetsService {
 
 
     private Sheets getSheetsService() throws IOException, GeneralSecurityException {
-        InputStream in = GoogleSheetsService.class.getResourceAsStream(Config.CREDENTIALS_FILE_PATH);
-        if (in == null) {
-            throw new IOException("Không tìm thấy file credentials: " + Config.CREDENTIALS_FILE_PATH);
+        InputStream in;
+
+        // 1️⃣ Ưu tiên đọc từ biến môi trường (Render/Railway)
+        String envCredentials = System.getenv("GOOGLE_CREDENTIALS");
+        if (envCredentials != null && !envCredentials.isBlank()) {
+            in = new ByteArrayInputStream(envCredentials.getBytes(StandardCharsets.UTF_8));
+            System.out.println("Loaded credentials from environment variable.");
+        } else {
+            // 2️⃣ Nếu không có, fallback đọc file local
+            in = GoogleSheetsService.class.getResourceAsStream(Config.CREDENTIALS_FILE_PATH);
+            if (in == null) {
+                throw new IOException("Không tìm thấy file credentials: " + Config.CREDENTIALS_FILE_PATH);
+            }
+            System.out.println("Loaded credentials from local file.");
         }
 
         var credentials = ServiceAccountCredentials.fromStream(in)
