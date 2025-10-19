@@ -24,23 +24,24 @@ public class GoogleSheetsService {
 
 
     private Sheets getSheetsService() throws IOException, GeneralSecurityException {
+        String credentialsJson = Config.GOOGLE_CREDENTIALS_JSON;
         InputStream in;
 
-        // 1️⃣ Ưu tiên đọc từ biến môi trường (Render/Railway)
-        String envCredentials = System.getenv("GOOGLE_CREDENTIALS");
-        if (envCredentials != null && !envCredentials.isBlank()) {
-            in = new ByteArrayInputStream(envCredentials.getBytes(StandardCharsets.UTF_8));
-            System.out.println("Loaded credentials from environment variable.");
-        } else {
-            // 2️⃣ Nếu không có, fallback đọc file local
+        if (credentialsJson != null && !credentialsJson.isEmpty()){
+            // Deploy: đọc từ biến môi trường GOOGLE_CREDENTIALS
+            System.out.println("Using GOOGLE_CREDENTIALS from environment");
+            in = new ByteArrayInputStream(credentialsJson.getBytes(StandardCharsets.UTF_8));
+        } else  {
+            // Local: đọc từ file thật (path trong .env)
+            System.out.println("Using local credentials file: " + Config.CREDENTIALS_FILE_PATH);
             in = GoogleSheetsService.class.getResourceAsStream(Config.CREDENTIALS_FILE_PATH);
             if (in == null) {
                 throw new IOException("Không tìm thấy file credentials: " + Config.CREDENTIALS_FILE_PATH);
             }
-            System.out.println("Loaded credentials from local file.");
         }
 
-        var credentials = ServiceAccountCredentials.fromStream(in)
+        var credentials = ServiceAccountCredentials
+                .fromStream(in)
                 .createScoped(Collections.singleton(SheetsScopes.SPREADSHEETS));
 
         return new Sheets.Builder(
