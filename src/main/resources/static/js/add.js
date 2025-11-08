@@ -190,6 +190,14 @@ function enableForm() {
     elements.form.style.pointerEvents = 'auto';
 }
 
+function generateIdempotencyKey(formData) {
+    // Option 1: Use encodeURIComponent to handle Unicode, then btoa
+    const jsonString = JSON.stringify(formData);
+    const encoded = encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, 
+        (match, p1) => String.fromCharCode(parseInt(p1, 16)));
+    return btoa(encoded).substring(0, 32);
+}
+
 function setupFormSubmit() {
     elements.form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -212,13 +220,17 @@ function setupFormSubmit() {
                 group: elements.groupSelect ? elements.groupSelect.value : "",
                 subgroup: elements.subgroupSelect ? elements.subgroupSelect.value : "",
                 category: elements.categoryInput ? elements.categoryInput.value : "",
-                amount: elements.amountInput ? elements.amountInput.value : "",
+                amount: (elements.amountInput ? elements.amountInput.value : "").replace(/\D/g, ""),
                 note: elements.noteInput ? elements.noteInput.value : ""
             }
 
+            const idempotencyKey = generateIdempotencyKey(formData);
             const response = await fetch('/append', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Idempotency-Key': idempotencyKey
+                },
                 body: JSON.stringify(formData)
             });
             
