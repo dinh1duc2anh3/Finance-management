@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Transaction List</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      .table-container {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin: 20px auto;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      .table-header-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .table-footer-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 15px;
+      }
+      .action-menu {
+        position: relative;
+      }
+      .dropdown-menu {
+        min-width: 120px;
+      }
+      .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .table td {
+        vertical-align: middle;
+      }
+      .action-btn {
+        background: none;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 18px;
+      }
+      .action-btn:hover {
+        background-color: #f0f0f0;
+        border-radius: 4px;
+      }
+      .checkbox-column {
+        width: 50px;
+        text-align: center;
+      }
+      .order-column {
+        width: 60px;
+        text-align: center;
+      }
+      .action-column {
+        width: 50px;
+        text-align: center;
+      }
+      .icon-svg {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+      .icon-svg-sm {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 4px;
+      }
+      .icon-svg-lg {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid mt-4">
+      <div class="table-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">
+            <img src="/images/checklist.svg" alt="List" style="width: 30px; height: 30px; vertical-align: middle; margin-right: 8px;" />
+            Transaction List
+          </h4>
+          <div class="table-header-actions">
+            <button 
+              id="deleteSelectedBtn" 
+              class="btn btn-danger btn-sm"
+              disabled
+            >
+              <img src="/images/delete.svg" alt="Delete" style="width: 30px; height: 30px; vertical-align: middle; margin-right: 8px;" />
+              Delete Selected
+            </button>
+            <button 
+              id="addBtn" 
+              class="btn btn-primary btn-sm"
+              onclick="window.location.href='/add'"
+            >
+              <img src="/images/add.svg" alt="Add" style="width: 30px; height: 30px; vertical-align: middle; margin-right: 8px;" />
+              Add Transaction
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-striped" id="transactionsTable">
+            <thead>
+              <tr>
+                <th class="checkbox-column">
+                  <input 
+                    type="checkbox" 
+                    id="selectAllCheckbox"
+                    title="Select All"
+                  />
+                </th>
+                <th class="order-column">#</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Transaction</th>
+                <th>Group</th>
+                <th>Subgroup</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Note</th>
+                <th class="action-column"></th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody">
+              <tr>
+                <td colspan="11" class="text-center">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footer-actions">
+          <button 
+            id="addBtnFooter" 
+            class="btn btn-primary"
+            onclick="window.location.href='/add'"
+          >
+            <img src="/images/add.svg" alt="Add" class="icon-svg-lg" style="width: 30px; height: 30px; vertical-align: middle; margin-right: 8px;" />
+            Add Transaction
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/js/transactions.js"></script>
+  </body>
+</html>
+

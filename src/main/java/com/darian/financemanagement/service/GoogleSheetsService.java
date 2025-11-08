@@ -6,6 +6,10 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.AppendValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
+import com.google.api.services.sheets.v4.model.Request;
+import com.google.api.services.sheets.v4.model.DeleteDimensionRequest;
+import com.google.api.services.sheets.v4.model.DimensionRange;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.util.FileUtils;
@@ -93,5 +97,88 @@ public class GoogleSheetsService {
                 .execute();
 
         System.out.println("Data appended successfully: " + response.getUpdates().getUpdatedRange());
+    }
+
+    public void deleteRow(String spreadsheetId, int rowIndex)
+            throws IOException, GeneralSecurityException {
+        Sheets service = getSheetsService();
+        
+        // Convert 1-based row index to 0-based for API
+        int zeroBasedRowIndex = rowIndex - 1;
+        
+        DeleteDimensionRequest deleteRequest = new DeleteDimensionRequest()
+                .setRange(new DimensionRange()
+                        .setSheetId(0) // Assuming first sheet
+                        .setDimension("ROWS")
+                        .setStartIndex(zeroBasedRowIndex)
+                        .setEndIndex(zeroBasedRowIndex + 1));
+        
+        Request request = new Request().setDeleteDimension(deleteRequest);
+        BatchUpdateSpreadsheetRequest batchRequest = new BatchUpdateSpreadsheetRequest()
+                .setRequests(Collections.singletonList(request));
+        
+        service.spreadsheets().batchUpdate(spreadsheetId, batchRequest).execute();
+        System.out.println("Row " + rowIndex + " deleted successfully");
+    }
+
+    public void deleteRows(String spreadsheetId, List<Integer> rowIndices)
+            throws IOException, GeneralSecurityException {
+        Sheets service = getSheetsService();
+        
+        // Sort descending to delete from bottom to top (to maintain correct indices)
+        List<Integer> sortedIndices = new ArrayList<>(rowIndices);
+        sortedIndices.sort((a, b) -> b.compareTo(a));
+        
+        List<Request> requests = new ArrayList<>();
+        for (Integer rowIndex : sortedIndices) {
+            int zeroBasedRowIndex = rowIndex - 1;
+            DeleteDimensionRequest deleteRequest = new DeleteDimensionRequest()
+                    .setRange(new DimensionRange()
+                            .setSheetId(0)
+                            .setDimension("ROWS")
+                            .setStartIndex(zeroBasedRowIndex)
+                            .setEndIndex(zeroBasedRowIndex + 1));
+            requests.add(new Request().setDeleteDimension(deleteRequest));
+        }
+        
+        BatchUpdateSpreadsheetRequest batchRequest = new BatchUpdateSpreadsheetRequest()
+                .setRequests(requests);
+        
+        service.spreadsheets().batchUpdate(spreadsheetId, batchRequest).execute();
+        System.out.println("Rows deleted successfully: " + rowIndices);
+    }
+
+    public void cloneRow(String spreadsheetId, String range, int rowIndex)
+            throws IOException, GeneralSecurityException {
+        Sheets service = getSheetsService();
+        
+        // Read the row to clone
+        String sheetName = range.split("!")[0];
+        String readRange = sheetName + "!A" + rowIndex + ":H" + rowIndex;
+        ValueRange response = service.spreadsheets().values()
+                .get(spreadsheetId, readRange)
+                .execute();
+        
+        List<List<Object>> values = response.getValues();
+        if (values == null || values.isEmpty()) {
+            throw new IOException("Row " + rowIndex + " not found or empty");
+        }
+        
+        List<Object> rowData = values.get(0);
+        // Ensure we have 8 columns (A-H)
+        while (rowData.size() < 8) {
+            rowData.add("");
+        }
+        
+        // Append the cloned row
+        ValueRange appendBody = new ValueRange()
+                .setValues(Collections.singletonList(rowData));
+        
+        AppendValuesResponse appendResponse = service.spreadsheets().values()
+                .append(spreadsheetId, range, appendBody)
+                .setValueInputOption("USER_ENTERED")
+                .execute();
+        
+        System.out.println("Row " + rowIndex + " cloned successfully: " + appendResponse.getUpdates().getUpdatedRange());
     }
 }

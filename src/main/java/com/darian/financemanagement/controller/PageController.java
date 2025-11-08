@@ -11,4 +11,9 @@ public class PageController {
     public String addPage() {
         return "add";
     }
+
+    @GetMapping({"/transactions"})
+    public String transactionsPage() {
+        return "transactions";
+    }
 }

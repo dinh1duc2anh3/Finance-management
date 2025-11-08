@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 //@RequestMapping("/sheet")
@@ -64,6 +65,80 @@ public class SheetController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error saving to Google Sheets: " + e.getMessage());
+        } catch (GeneralSecurityException e) {
+            System.err.println("SecurityException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Authentication error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Unexpected error: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete-row/{rowIndex}")
+    public ResponseEntity<String> deleteRow(@PathVariable int rowIndex) {
+        try {
+            sheetsService.deleteRow(SPREADSHEET_ID, rowIndex);
+            return ResponseEntity.ok("Row " + rowIndex + " deleted successfully");
+        } catch (IOException e) {
+            System.err.println("IOException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error deleting row: " + e.getMessage());
+        } catch (GeneralSecurityException e) {
+            System.err.println("SecurityException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Authentication error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Unexpected error: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete-rows")
+    public ResponseEntity<String> deleteRows(@RequestBody List<Integer> rowIndices) {
+        try {
+            sheetsService.deleteRows(SPREADSHEET_ID, rowIndices);
+            return ResponseEntity.ok(rowIndices.size() + " row(s) deleted successfully");
+        } catch (IOException e) {
+            System.err.println("IOException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error deleting rows: " + e.getMessage());
+        } catch (GeneralSecurityException e) {
+            System.err.println("SecurityException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Authentication error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Unexpected error: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/clone-row")
+    public ResponseEntity<String> cloneRow(@RequestBody Map<String, Object> request) {
+        try {
+            Integer rowIndex = (Integer) request.get("rowIndex");
+            if (rowIndex == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("rowIndex is required");
+            }
+            sheetsService.cloneRow(SPREADSHEET_ID, RANGE, rowIndex);
+            return ResponseEntity.ok("Row " + rowIndex + " cloned successfully");
+        } catch (IOException e) {
+            System.err.println("IOException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error cloning row: " + e.getMessage());
         } catch (GeneralSecurityException e) {
             System.err.println("SecurityException: " + e.getMessage());
             e.printStackTrace();

@@ -44,11 +44,46 @@
       .input-group .btn {
         border-left: 0;
       }
+      .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 30px;
+      }
+      .back-button {
+        background: none;
+        border: none;
+        padding: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        transition: opacity 0.2s;
+      }
+      .back-button:hover {
+        opacity: 0.7;
+      }
+      .header-title {
+        flex: 1;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
     <div class="form-container">
-      <h4 class="text-center mb-4">➕ Add Transaction</h4>
+      <div class="header-container">
+        <button 
+          class="back-button" 
+          onclick="goToTransactions()"
+          title="Back to Transactions"
+        >
+          <img src="/images/previous.svg" alt="Previous" style="width: 30px; height: 30px;" />
+        </button>
+        <h4 class="header-title mb-0">
+          <img src="/images/add.svg" alt="Add" style="width: 30px; height: 30px; vertical-align: middle; margin-right: 8px;" />
+          Add Transaction
+        </h4>
+        <div style="width: 30px;"></div> <!-- Spacer for centering -->
+      </div>
 
       <form id="transactionForm">
         <!-- Date -->
@@ -161,7 +196,12 @@
       </form>
     </div>
 
-    <script></script>
+    <script>
+      function goToTransactions() {
+        // Navigate to transactions page and force reload to get latest data
+        window.location.href = '/transactions';
+      }
+    </script>
 
     <!-- logic add form -->
     <script type="module" src="/js/add.js"></script>
