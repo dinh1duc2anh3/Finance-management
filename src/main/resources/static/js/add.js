@@ -10,6 +10,7 @@ const elements = {
     groupSelect: document.getElementById("group"),
     subgroupSelect: document.getElementById("subgroup"),
     categoryInput: document.getElementById("category"),
+    resetGroupBtn: document.getElementById("resetGroupBtn"),
     amountInput: document.getElementById("amount"),
     noteInput: document.getElementById("note"),
     form: document.getElementById("transactionForm")
@@ -106,6 +107,24 @@ function setupGroupSubgroupEvents() {
         elements.categoryInput.value = '';
         updateCategorySuggestions();
     });
+}
+
+function resetGroup() {
+    // Reset group, subgroup, and category
+    elements.groupSelect.value = '';
+    elements.subgroupSelect.innerHTML = '<option value="">-- Select Subgroup --</option>';
+    elements.categoryInput.value = '';
+    updateCategorySuggestions();
+}
+
+
+function setupResetGroupButton() {
+    if (elements.resetGroupBtn) {
+        elements.resetGroupBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            resetGroup();
+        });
+    }
 }
 
 function setupAmountInput() {
@@ -222,6 +241,7 @@ function setup() {
     setupAwesomplete();
     setupCategoryInputEvents();
     setupGroupSubgroupEvents();
+    setupResetGroupButton();
     setupAmountInput();
     setupNoteInput();
     setupFormSubmit();
