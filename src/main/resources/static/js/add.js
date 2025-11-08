@@ -45,7 +45,36 @@ function setupAwesomplete() {
     elements.awesompleteInstance = new Awesomplete(elements.categoryInput, {
         minChars: 0,
         maxItems: 50,
-        autoFirst: true
+        autoFirst: true,
+        filter: function(text, input) {
+            // Custom filter để hỗ trợ tìm kiếm không dấu
+            const normalizedText = removeVietnameseAccents(text);
+            const normalizedInput = removeVietnameseAccents(input);
+            return normalizedText.indexOf(normalizedInput) !== -1;
+        },
+        item: function(text, input) {
+            // Custom item để highlight đúng vị trí trong text gốc
+            const normalizedText = removeVietnameseAccents(text);
+            const normalizedInput = removeVietnameseAccents(input);
+            const index = normalizedText.indexOf(normalizedInput);
+            
+            if (index === -1) {
+                return Awesomplete.$.create("li", {
+                    innerHTML: text,
+                    "aria-selected": "false"
+                });
+            }
+            
+            // Highlight phần match
+            const beforeMatch = text.substring(0, index);
+            const match = text.substring(index, index + input.length);
+            const afterMatch = text.substring(index + input.length);
+            
+            return Awesomplete.$.create("li", {
+                innerHTML: beforeMatch + "<mark>" + match + "</mark>" + afterMatch,
+                "aria-selected": "false"
+            });
+        }
     });
 }
 
@@ -249,3 +278,16 @@ function setup() {
 }
 
 setup();
+
+// -------------------------
+// --- Vietnamese accent removal utility ---
+// -------------------------
+function removeVietnameseAccents(str) {
+    if (!str) return '';
+    return str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase();
+}
