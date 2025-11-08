@@ -1,11 +1,12 @@
 import { categoryData } from './config.js';
-
+import { loadingManager } from './loadingUtils.js';
 // -------------------------
 // --- Element references ---
 // -------------------------
 const elements = {
     dateInput: document.getElementById("date"),
     timeInput: document.getElementById("time"),
+    transactionInput: document.getElementById("transaction"),
     groupSelect: document.getElementById("group"),
     subgroupSelect: document.getElementById("subgroup"),
     categoryInput: document.getElementById("category"),
@@ -18,6 +19,7 @@ const elements = {
 // --- Data structures ---
 // -------------------------
 const categoryMap = {}; // category → {group, subgroup}
+let isSubmitting = false; // Flag để ngăn submit nhiều lần
 
 // -------------------------
 // --- Setup functions ---
@@ -122,26 +124,78 @@ function setupNoteInput() {
     });
 }
 
-function setupFormSubmit() {
-    elements.form.addEventListener("submit", e => {
-        e.preventDefault();
-        const formData = Object.fromEntries(new FormData(elements.form).entries());
+function disableForm() {
+    elements.form.querySelectorAll('input, select, textarea, button').forEach(el => {
+        el.disabled = true;
+    });
+    // Thêm class để làm mờ form
+    elements.form.style.opacity = '0.6';
+    elements.form.style.pointerEvents = 'none';
+}
 
-        fetch('/append', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        })
-        .then(res => res.text()) // ⚠️ Controller trả về String, nên dùng .text()
-        .then(msg => {
-            console.log("✅ Submitted:", msg);
-            alert(msg || "Transaction saved!");
-            resetForm();
-        })
-        .catch(err => {
-            console.error('❌ Error:', err);
-            alert("❌ Failed to save transaction!");
-        });
+function enableForm() {
+    elements.form.querySelectorAll('input, select, textarea, button').forEach(el => {
+        el.disabled = false;
+    });
+    // Khôi phục form về bình thường
+    elements.form.style.opacity = '1';
+    elements.form.style.pointerEvents = 'auto';
+}
+
+function setupFormSubmit() {
+    elements.form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        // Ngăn submit nhiều lần
+        if (isSubmitting) {
+            console.log("Request already in progress, ignoring...");
+            return;
+        }
+        
+        isSubmitting = true;
+        loadingManager.showLoading(); // Hiển thị loading
+        disableForm(); // Disable form
+        
+        try {
+            const formData = {
+                date: elements.dateInput ? elements.dateInput.value : "",
+                time: elements.timeInput ? elements.timeInput.value : "",
+                transaction: elements.transactionInput ? elements.transactionInput.value : "",
+                group: elements.groupSelect ? elements.groupSelect.value : "",
+                subgroup: elements.subgroupSelect ? elements.subgroupSelect.value : "",
+                category: elements.categoryInput ? elements.categoryInput.value : "",
+                amount: elements.amountInput ? elements.amountInput.value : "",
+                note: elements.noteInput ? elements.noteInput.value : ""
+            }
+
+            const response = await fetch('/append', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            const msg = await response.text();
+
+            if (response.ok) {
+                console.log("Submitted:", msg);
+                alert(msg || "Transaction saved!");
+                resetForm();
+            } else {
+                // Server trả về lỗi (4xx, 5xx)
+                const errorMsg = msg || `Server error: ${response.status} ${response.statusText}`;
+                console.error('Server error:', errorMsg);
+                alert(`Failed to save transaction!\n\n${errorMsg}`);
+            }
+        } catch (err) {
+            // Network error hoặc lỗi khác
+            console.error('Error:', err);
+            const errorMsg = err.message || "Network error or server unavailable";
+            alert(`Failed to save transaction!\n\n${errorMsg}\n\nPlease check your connection and try again.`);
+        } finally {
+            isSubmitting = false;
+            loadingManager.hideLoading();
+            enableForm();
+        }
     });
 }
 

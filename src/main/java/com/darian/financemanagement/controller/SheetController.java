@@ -3,6 +3,8 @@ package com.darian.financemanagement.controller;
 import com.darian.financemanagement.Config;
 import com.darian.financemanagement.dto.ExpenseRequest;
 import com.darian.financemanagement.service.GoogleSheetsService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -24,10 +26,29 @@ public class SheetController {
     }
 
     @PostMapping("/append")
-    public String appendRow(@RequestBody ExpenseRequest request)
-            throws IOException, GeneralSecurityException {
-        sheetsService.appendData(SPREADSHEET_ID, RANGE, request);
+    public ResponseEntity<String> appendRow(@RequestBody ExpenseRequest request) {
+        System.out.println("Received request: " + request.getDate() + " " + request.getTime() + " " + request.getTransaction() + " " + request.getGroup() + " " + request.getSubgroup() + " " + request.getCategory() + " " + request.getAmount() + " " + request.getNote());
 
-        return "✅ Row added successfully: " + request.getTransaction()  + " on " + request.getDate()+ " "+ request.getTime();
+        try {
+            sheetsService.appendData(SPREADSHEET_ID, RANGE, request);
+            String successMsg = "Row added successfully: " + request.getTransaction() 
+                    + " on " + request.getDate() + " " + request.getTime();
+            return ResponseEntity.ok(successMsg);
+        } catch (IOException e) {
+            System.err.println("IOException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error saving to Google Sheets: " + e.getMessage());
+        } catch (GeneralSecurityException e) {
+            System.err.println("SecurityException: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Authentication error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Unexpected error: " + e.getMessage());
+        }
     }
 }

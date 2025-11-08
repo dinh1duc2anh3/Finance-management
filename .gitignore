@@ -37,3 +37,8 @@ src/main/resources/credentials/
 
 #file environment
 .env
+
+
+
+#Cursor chat
+cursor_chat-clientLoadingState&serverDuplicateRequestHandling_8_11.md
