@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>New Sheet Configuration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; }
+        .card { max-width: 720px; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; }
+        .row { display: flex; gap: 12px; }
+        .row > * { flex: 1; }
+        label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+        input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+        button { padding: 10px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .primary { background: #2563eb; color: white; }
+        .ghost { background: #f3f4f6; color: #111827; }
+        .muted { color: #6b7280; font-size: 12px; }
+        .mt-2 { margin-top: 8px; }
+        .mt-4 { margin-top: 16px; }
+        .mt-6 { margin-top: 24px; }
+        .success { padding: 12px; background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; border-radius: 6px; }
+        .error { padding: 12px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 6px; white-space: pre-line; }
+        .hint { padding: 12px; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 6px; }
+        .hidden { display: none; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<h2>Create New Sheet Configuration</h2>
+<p><a href="/">&larr; Back to list</a></p>
+<div class="card">
+    <form id="sheetConfigForm">
+        <div class="mt-2">
+            <label for="spreadSheetUrl">Spreadsheet URL</label>
+            <input id="spreadSheetUrl" name="spreadSheetUrl" type="url" required
+                   placeholder="https://docs.google.com/spreadsheets/d/xxxxxxxxxxxxxxxxxxxxxxxxxxxx/edit#gid=0" />
+            <div class="muted mt-2">Paste the full Google Sheets URL.</div>
+        </div>
+
+        <div class="row mt-4">
+            <div>
+                <label for="spreadsheetName">Spreadsheet Name (period)</label>
+                <input id="spreadsheetName" name="spreadsheetName" type="text" required
+                       placeholder="Chi tiêu 9/2025" />
+                <div class="muted mt-2">Used to extract time, e.g., M/YYYY.</div>
+            </div>
+            <div>
+                <label for="sheetName">Sheet (tab) Name</label>
+                <input id="sheetName" name="sheetName" type="text" required placeholder="test1" />
+                <div class="muted mt-2">The specific worksheet tab to read/write.</div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label for="range">Range</label>
+            <input id="range" name="range" type="text" required placeholder="A:H" />
+            <div class="muted mt-2">Column range, e.g., A:H.</div>
+        </div>
+
+        <!-- Proactive share-access hint BEFORE connecting -->
+        <div class="hint mt-4" id="shareHint">
+            Share access with the service account below if needed:<br/>
+            <code>sheet-writer@finance-management.iam.gserviceaccount.com</code>
+        </div>
+
+        <div class="row mt-6">
+            <button type="button" class="ghost" id="fillExample">Fill Example</button>
+            <div style="flex:1"></div>
+            <button type="submit" class="primary">Connect</button>
+        </div>
+    </form>
+
+    <div id="successBox" class="success mt-4 hidden"></div>
+    <div id="errorBox" class="error mt-4 hidden"></div>
+</div>
+
+<script>
+    const form = document.getElementById('sheetConfigForm');
+    const fillBtn = document.getElementById('fillExample');
+    const successBox = document.getElementById('successBox');
+    const errorBox = document.getElementById('errorBox');
+
+    fillBtn.addEventListener('click', () => {
+        document.getElementById('spreadSheetUrl').value =
+            'https://docs.google.com/spreadsheets/d/19exZgC-JjIYcz6O7-fHCNHYmCZwrWFBh2YNwB2My6Bw/edit?gid=0#gid=0';
+        document.getElementById('spreadsheetName').value = 'Chi tiêu 9/2025';
+        document.getElementById('sheetName').value = 'test1';
+        document.getElementById('range').value = 'A:H';
+    });
+
+    function show(el, content) { el.textContent = content || ''; el.classList.remove('hidden'); }
+    function hide(el) { el.classList.add('hidden'); el.textContent = ''; }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hide(successBox); hide(errorBox);
+
+        const spreadSheetUrl = document.getElementById('spreadSheetUrl').value.trim();
+        const spreadsheetName = document.getElementById('spreadsheetName').value.trim();
+        const sheetName = document.getElementById('sheetName').value.trim();
+        const range = document.getElementById('range').value.trim();
+
+        if (!/^https:\/\/docs\.google\.com\/spreadsheets\/d\//.test(spreadSheetUrl)) {
+            show(errorBox, 'URL is not a valid Google Sheets URL.');
+            return;
+        }
+
+        const payload = { spreadSheetUrl, spreadsheetName, sheetName, range };
+
+        try {
+            const res = await fetch('/setup-sheet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (!res.ok || data.success === false) {
+                show(errorBox, data.error || `Request failed with status ${res.status}`);
+                return;
+            }
+
+            show(successBox, `Connected. Period: ${data.displayPeriod}. Config ID: ${data.configId}.`);
+            // No longer showing share-access hint post-connection; it's already shown above the buttons
+        } catch (err) {
+            show(errorBox, `Unexpected error: ${err.message}`);
+        }
+    });
+</script>
+</body>
+</html>

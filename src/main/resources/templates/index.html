@@ -1,21 +1,49 @@
+<!-- src/main/resources/templates/index.html -->
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Chào Đức Anh</title>
+    <meta charset="UTF-8" />
+    <title>Your Sheet Configurations</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f7fa;
-            text-align: center;
-            margin-top: 100px;
-        }
-        h1 {
-            color: #333;
-        }
+        body { font-family: Arial, sans-serif; margin: 24px; color: #1f2937; }
+        .toolbar { display:flex; align-items:center; justify-content: space-between; max-width: 900px; }
+        .list { margin-top: 16px; max-width: 900px; }
+        .item { display:flex; align-items:center; justify-content: space-between; padding: 14px 16px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px; }
+        .item h3 { margin: 0 0 4px; font-size: 16px; }
+        .muted { color: #6b7280; font-size: 12px; }
+        .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid #d1d5db; background: #f9fafb; }
+        .btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+        .btn-primary { background: #2563eb; color: #fff; border: none; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .empty { padding: 24px; border: 1px dashed #d1d5db; border-radius: 8px; text-align: center; color: #6b7280; }
     </style>
 </head>
 <body>
-<h1>Chào <span th:text="${name}">bạn</span>!</h1>
+<div class="toolbar">
+    <h2>Sheet Configurations</h2>
+    <a class="btn btn-primary" href="/sheet-configs/new">+ New</a>
+</div>
+
+<div class="list">
+    <div th:if="${#lists.isEmpty(configs)}" class="empty">
+        No sheet configurations yet. Click "New" to add one.
+    </div>
+
+    <div th:each="cfg : ${configs}" class="item">
+        <div>
+            <h3 th:text="${cfg.spreadsheetName}">Chi tiêu 9/2025</h3>
+            <div class="muted">
+                <span class="pill" th:text="|${cfg.month}/${cfg.year}|">9/2025</span>
+                <span class="pill" th:text="${cfg.sheetName}">test1</span>
+                <span class="pill" th:text="${cfg.range}">A:H</span>
+            </div>
+        </div>
+        <div>
+            <a class="btn" th:href="@{/transactions(configId=${cfg.id})}">Open</a>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -1,5 +1,14 @@
 import { categoryData } from './config.js';
 import { loadingManager } from './loadingUtils.js';
+
+// Read configId from query string
+const urlParams = new URLSearchParams(window.location.search);
+const configId = urlParams.get('configId');
+if (!configId) {
+    alert('Missing configId. Please open the transactions page from a specific sheet.');
+    window.location.href = '/';
+}
+
 // -------------------------
 // --- Element references ---
 // -------------------------
@@ -201,17 +210,10 @@ function generateIdempotencyKey(formData) {
 function setupFormSubmit() {
     elements.form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
-        // Ngăn submit nhiều lần
-        if (isSubmitting) {
-            console.log("Request already in progress, ignoring...");
-            return;
-        }
-        
+        if (isSubmitting) { return; }
         isSubmitting = true;
-        loadingManager.showLoading(); // Hiển thị loading
-        disableForm(); // Disable form
-        
+        loadingManager.showLoading();
+        disableForm();
         try {
             const formData = {
                 date: elements.dateInput ? elements.dateInput.value : "",
@@ -225,7 +227,7 @@ function setupFormSubmit() {
             }
 
             const idempotencyKey = generateIdempotencyKey(formData);
-            const response = await fetch('/append', {
+            const response = await fetch(`/append?configId=${encodeURIComponent(configId)}`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json', 
@@ -233,24 +235,17 @@ function setupFormSubmit() {
                 },
                 body: JSON.stringify(formData)
             });
-            
             const msg = await response.text();
-
             if (response.ok) {
-                console.log("Submitted:", msg);
                 alert(msg || "Transaction saved!");
                 resetForm();
             } else {
-                // Server trả về lỗi (4xx, 5xx)
                 const errorMsg = msg || `Server error: ${response.status} ${response.statusText}`;
-                console.error('Server error:', errorMsg);
                 alert(`Failed to save transaction!\n\n${errorMsg}`);
             }
         } catch (err) {
-            // Network error hoặc lỗi khác
-            console.error('Error:', err);
             const errorMsg = err.message || "Network error or server unavailable";
-            alert(`Failed to save transaction!\n\n${errorMsg}\n\nPlease check your connection and try again.`);
+            alert(`Failed to save transaction!\n\n${errorMsg}`);
         } finally {
             isSubmitting = false;
             loadingManager.hideLoading();

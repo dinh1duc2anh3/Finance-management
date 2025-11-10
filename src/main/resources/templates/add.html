@@ -198,8 +198,13 @@
 
     <script>
       function goToTransactions() {
-        // Navigate to transactions page and force reload to get latest data
-        window.location.href = '/transactions';
+        const params = new URLSearchParams(window.location.search);
+        const configId = params.get('configId');
+        if (configId) {
+          window.location.href = '/transactions?configId=' + encodeURIComponent(configId);
+        } else {
+          window.location.href = '/';
+        }
       }
     </script>
 

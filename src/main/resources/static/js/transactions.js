@@ -1,5 +1,24 @@
 import { loadingManager } from './loadingUtils.js';
 
+// Read configId from query string
+const urlParams = new URLSearchParams(window.location.search);
+const configId = urlParams.get('configId');
+
+if (!configId) {
+    console.error('Missing configId in URL. Redirecting to home.');
+    alert('Missing configId. Please pick a sheet from the home page.');
+    window.location.href = '/';
+}
+
+// Wire Add buttons to include configId when navigating to add page
+function setupAddButtons() {
+    const addBtn = document.getElementById('addBtn');
+    const addBtnFooter = document.getElementById('addBtnFooter');
+    const target = `/add?configId=${encodeURIComponent(configId)}`;
+    if (addBtn) addBtn.addEventListener('click', () => window.location.href = target);
+    if (addBtnFooter) addBtnFooter.addEventListener('click', () => window.location.href = target);
+}
+
 // -------------------------
 // --- Element references ---
 // -------------------------
@@ -16,14 +35,14 @@ const elements = {
 async function loadTransactions() {
     try {
         loadingManager.showLoading('Loading transactions...');
-        const response = await fetch('/read-sheet');
+        const response = await fetch(`/read-sheet?configId=${encodeURIComponent(configId)}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         
         // First row is header, skip it
-        elements.transactions = data.slice(1).map((row, index) => ({
+        elements.transactions = (data || []).slice(1).map((row, index) => ({
             rowIndex: index + 2, // +2 because: 1 for header, 1 for 0-based to 1-based
             date: row[0] || '',
             time: row[1] || '',
@@ -91,7 +110,7 @@ function renderTable() {
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                     >
-                        <img src="/images/hamburger.svg" style="width: 14px; height: 14px; margin-right: 6px; vertical-align: middle;" />
+                        <img src="/images/hamburger.svg" alt="Menu" style="width: 14px; height: 14px; margin-right: 6px; vertical-align: middle;" />
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
@@ -144,7 +163,7 @@ async function deleteSingleTransaction(rowIndex) {
 
     try {
         loadingManager.showLoading('Deleting transaction...');
-        const response = await fetch(`/delete-row/${rowIndex}`, {
+        const response = await fetch(`/delete-row/${rowIndex}?configId=${encodeURIComponent(configId)}`, {
             method: 'DELETE'
         });
 
@@ -182,7 +201,7 @@ async function deleteSelectedTransactions() {
 
     try {
         loadingManager.showLoading('Deleting transactions...');
-        const response = await fetch('/delete-rows', {
+        const response = await fetch(`/delete-rows?configId=${encodeURIComponent(configId)}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -222,7 +241,7 @@ async function cloneTransaction(rowIndex) {
 
     try {
         loadingManager.showLoading('Cloning transaction...');
-        const response = await fetch('/clone-row', {
+        const response = await fetch(`/clone-row?configId=${encodeURIComponent(configId)}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -323,6 +342,6 @@ function setupEventDelegation() {
 // -------------------------
 // --- Initialize ---
 // -------------------------
+setupAddButtons();
 setupEventDelegation();
 loadTransactions();
-

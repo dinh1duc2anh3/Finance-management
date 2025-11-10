@@ -10,11 +10,15 @@ import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.DeleteDimensionRequest;
 import com.google.api.services.sheets.v4.model.DimensionRange;
+import com.google.api.services.sheets.v4.model.Spreadsheet;
+import com.google.api.services.sheets.v4.model.Sheet;
+import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.util.FileUtils;
+import com.darian.financemanagement.util.FileUtils;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,9 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
+@Service
 public class GoogleSheetsService {
-
 
     private Sheets getSheetsService() throws IOException, GeneralSecurityException {
         String credentialsJson = Config.GOOGLE_CREDENTIALS_JSON;
@@ -65,6 +68,18 @@ public class GoogleSheetsService {
         }
     }
 
+    private Integer resolveSheetIdByName(Sheets service, String spreadsheetId, String sheetName) throws IOException {
+        Spreadsheet spreadsheet = service.spreadsheets().get(spreadsheetId).execute();
+        if (spreadsheet.getSheets() == null) return null;
+        for (Sheet s : spreadsheet.getSheets()) {
+            SheetProperties props = s.getProperties();
+            if (props != null && sheetName.equals(props.getTitle())) {
+                return props.getSheetId();
+            }
+        }
+        return null;
+    }
+
     public List<List<Object>> readData(String spreadsheetId, String range)
             throws IOException, GeneralSecurityException {
         Sheets service = getSheetsService();
@@ -99,51 +114,58 @@ public class GoogleSheetsService {
         System.out.println("Data appended successfully: " + response.getUpdates().getUpdatedRange());
     }
 
-    public void deleteRow(String spreadsheetId, int rowIndex)
+    public void deleteRow(String spreadsheetId, String sheetName, int rowIndex)
             throws IOException, GeneralSecurityException {
         Sheets service = getSheetsService();
-        
-        // Convert 1-based row index to 0-based for API
+
+        Integer sheetId = resolveSheetIdByName(service, spreadsheetId, sheetName);
+        if (sheetId == null) {
+            throw new IOException("Sheet with name '" + sheetName + "' not found");
+        }
         int zeroBasedRowIndex = rowIndex - 1;
-        
+
         DeleteDimensionRequest deleteRequest = new DeleteDimensionRequest()
                 .setRange(new DimensionRange()
-                        .setSheetId(0) // Assuming first sheet
+                        .setSheetId(sheetId)
                         .setDimension("ROWS")
                         .setStartIndex(zeroBasedRowIndex)
                         .setEndIndex(zeroBasedRowIndex + 1));
-        
+
         Request request = new Request().setDeleteDimension(deleteRequest);
         BatchUpdateSpreadsheetRequest batchRequest = new BatchUpdateSpreadsheetRequest()
                 .setRequests(Collections.singletonList(request));
-        
+
         service.spreadsheets().batchUpdate(spreadsheetId, batchRequest).execute();
         System.out.println("Row " + rowIndex + " deleted successfully");
     }
 
-    public void deleteRows(String spreadsheetId, List<Integer> rowIndices)
+    public void deleteRows(String spreadsheetId, String sheetName, List<Integer> rowIndices)
             throws IOException, GeneralSecurityException {
         Sheets service = getSheetsService();
-        
-        // Sort descending to delete from bottom to top (to maintain correct indices)
+
+        Integer sheetId = resolveSheetIdByName(service, spreadsheetId, sheetName);
+        if (sheetId == null) {
+            throw new IOException("Sheet with name '" + sheetName + "' not found");
+        }
+
         List<Integer> sortedIndices = new ArrayList<>(rowIndices);
         sortedIndices.sort((a, b) -> b.compareTo(a));
-        
+
         List<Request> requests = new ArrayList<>();
         for (Integer rowIndex : sortedIndices) {
             int zeroBasedRowIndex = rowIndex - 1;
             DeleteDimensionRequest deleteRequest = new DeleteDimensionRequest()
                     .setRange(new DimensionRange()
-                            .setSheetId(0)
+                            .setSheetId(sheetId)
                             .setDimension("ROWS")
                             .setStartIndex(zeroBasedRowIndex)
                             .setEndIndex(zeroBasedRowIndex + 1));
             requests.add(new Request().setDeleteDimension(deleteRequest));
         }
-        
+
         BatchUpdateSpreadsheetRequest batchRequest = new BatchUpdateSpreadsheetRequest()
                 .setRequests(requests);
-        
+
         service.spreadsheets().batchUpdate(spreadsheetId, batchRequest).execute();
         System.out.println("Rows deleted successfully: " + rowIndices);
     }
@@ -151,34 +173,31 @@ public class GoogleSheetsService {
     public void cloneRow(String spreadsheetId, String range, int rowIndex)
             throws IOException, GeneralSecurityException {
         Sheets service = getSheetsService();
-        
-        // Read the row to clone
         String sheetName = range.split("!")[0];
         String readRange = sheetName + "!A" + rowIndex + ":H" + rowIndex;
         ValueRange response = service.spreadsheets().values()
                 .get(spreadsheetId, readRange)
                 .execute();
-        
+
         List<List<Object>> values = response.getValues();
         if (values == null || values.isEmpty()) {
             throw new IOException("Row " + rowIndex + " not found or empty");
         }
-        
+
         List<Object> rowData = values.get(0);
         // Ensure we have 8 columns (A-H)
         while (rowData.size() < 8) {
             rowData.add("");
         }
-        
-        // Append the cloned row
+
         ValueRange appendBody = new ValueRange()
                 .setValues(Collections.singletonList(rowData));
-        
+
         AppendValuesResponse appendResponse = service.spreadsheets().values()
                 .append(spreadsheetId, range, appendBody)
                 .setValueInputOption("USER_ENTERED")
                 .execute();
-        
+
         System.out.println("Row " + rowIndex + " cloned successfully: " + appendResponse.getUpdates().getUpdatedRange());
     }
 }
