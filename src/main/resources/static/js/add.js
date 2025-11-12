@@ -49,6 +49,28 @@ function setupDateTime() {
     const now = new Date();
     elements.dateInput.value = now.toISOString().slice(0,10);
     elements.timeInput.value = now.toTimeString().slice(0,5);
+
+    // Custom navigation for date input
+    elements.dateInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            elements.timeInput.focus();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            elements.timeInput.focus();
+        }
+    });
+
+    // Custom navigation for time input
+    elements.timeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            elements.transactionInput.focus();
+        } else if (e.key === 'Tab' && !e.shiftKey) {
+            e.preventDefault();
+            elements.transactionInput.focus();
+        }
+    });
 }
 
 function setupAwesomplete() {
@@ -133,6 +155,34 @@ function setupCategoryInputEvents() {
     elements.categoryInput.addEventListener("input", updateCategorySuggestions);
     elements.categoryInput.addEventListener("focus", updateCategorySuggestions);
     elements.categoryInput.addEventListener("awesomplete-selectcomplete", handleCategorySelectComplete);
+
+    // Custom navigation for category input - move to amount after selection
+    elements.categoryInput.addEventListener("awesomplete-selectcomplete", () => {
+        // Use setTimeout to ensure the selection is processed first
+        setTimeout(() => {
+            elements.amountInput.focus();
+        }, 50);
+    });
+
+    elements.categoryInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            // If there's a suggestion selected, let awesomplete handle it
+            // If no suggestion, move to amount
+            if (!elements.awesompleteInstance.selected) {
+                e.preventDefault();
+                elements.amountInput.focus();
+            }
+        }
+    });
+}
+
+function setupTransactionNavigation() {
+    elements.transactionInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab' && !e.shiftKey) {
+            e.preventDefault();
+            elements.categoryInput.focus();
+        }
+    });
 }
 
 function setupGroupSubgroupEvents() {
@@ -328,6 +378,7 @@ function setup() {
     setupCategoryMap();
     setupDateTime();
     setupAwesomplete();
+    setupTransactionNavigation();
     setupCategoryInputEvents();
     setupGroupSubgroupEvents();
     setupResetGroupButton();
