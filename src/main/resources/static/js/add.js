@@ -30,6 +30,7 @@ const elements = {
 // -------------------------
 const categoryMap = {}; // category → {group, subgroup}
 let isSubmitting = false; // Flag để ngăn submit nhiều lần
+const pendingRequests = new Map(); // Track pending requests by idempotency key
 
 // -------------------------
 // --- Setup functions ---
@@ -200,33 +201,83 @@ function enableForm() {
 }
 
 function generateIdempotencyKey(formData) {
-    // Option 1: Use encodeURIComponent to handle Unicode, then btoa
-    const jsonString = JSON.stringify(formData);
-    const encoded = encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, 
-        (match, p1) => String.fromCharCode(parseInt(p1, 16)));
-    return btoa(encoded).substring(0, 32);
+    // 1. Form data (for actual duplicate detection)
+    // 2. Rounded timestamp (to group rapid clicks within same minute)
+    // 3. Username (to separate different users - currently hardcoded as 'darian')
+
+    const now = new Date();
+    // Round UP to next minute (4:01:02 -> 4:02:00)
+    const roundedMinute = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
+                                   now.getHours(), now.getMinutes() + 1, 0, 0);
+    const roundedTimestamp = roundedMinute.getTime();
+
+    const username = 'darian'; // TODO: Replace with actual username when auth is implemented
+
+    // Create deterministic key from these components
+    const keyData = {
+        formData,
+        roundedTimestamp,
+        username
+    };
+
+    try {
+        const jsonString = JSON.stringify(keyData);
+        let hash = 0;
+        for (let i = 0; i < jsonString.length; i++) {
+            const char = jsonString.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+
+        // Return a readable key: hash + rounded minute
+        const hashStr = Math.abs(hash).toString(36);
+        const timeStr = roundedTimestamp.toString(36);
+        return `${hashStr}-${timeStr}-${username}`;
+    } catch (error) {
+        console.warn('Error generating idempotency key:', error);
+        // Fallback: use rounded timestamp + username
+        return `${roundedTimestamp}-${username}`;
+    }
 }
 
 function setupFormSubmit() {
     elements.form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        if (isSubmitting) { return; }
+
+        // Prevent multiple simultaneous submissions
+        if (isSubmitting) {
+            console.log('Form is already submitting, ignoring additional submit');
+            return;
+        }
+
+        const formData = {
+            date: elements.dateInput ? elements.dateInput.value : "",
+            time: elements.timeInput ? elements.timeInput.value : "",
+            transaction: elements.transactionInput ? elements.transactionInput.value : "",
+            group: elements.groupSelect ? elements.groupSelect.value : "",
+            subgroup: elements.subgroupSelect ? elements.subgroupSelect.value : "",
+            category: elements.categoryInput ? elements.categoryInput.value : "",
+            amount: (elements.amountInput ? elements.amountInput.value : "").replace(/\D/g, ""),
+            note: elements.noteInput ? elements.noteInput.value : ""
+        };
+
+        const idempotencyKey = generateIdempotencyKey(formData);
+        console.log('Generated idempotency key:', idempotencyKey);
+
+        // CLIENT-SIDE RACE CONDITION PROTECTION
+        if (pendingRequests.has(idempotencyKey)) {
+            console.log('Request already pending for this key, ignoring duplicate click');
+            return; // Ignore subsequent clicks with same key
+        }
+
+        // Mark this request as pending and set submission state
+        pendingRequests.set(idempotencyKey, true);
         isSubmitting = true;
         loadingManager.showLoading();
         disableForm();
-        try {
-            const formData = {
-                date: elements.dateInput ? elements.dateInput.value : "",
-                time: elements.timeInput ? elements.timeInput.value : "",
-                transaction: elements.transactionInput ? elements.transactionInput.value : "",
-                group: elements.groupSelect ? elements.groupSelect.value : "",
-                subgroup: elements.subgroupSelect ? elements.subgroupSelect.value : "",
-                category: elements.categoryInput ? elements.categoryInput.value : "",
-                amount: (elements.amountInput ? elements.amountInput.value : "").replace(/\D/g, ""),
-                note: elements.noteInput ? elements.noteInput.value : ""
-            }
 
-            const idempotencyKey = generateIdempotencyKey(formData);
+        try {
+            console.log('Form data for key generation:', formData);
             const response = await fetch(`/append?configId=${encodeURIComponent(configId)}`, {
                 method: 'POST',
                 headers: { 
@@ -247,6 +298,8 @@ function setupFormSubmit() {
             const errorMsg = err.message || "Network error or server unavailable";
             alert(`Failed to save transaction!\n\n${errorMsg}`);
         } finally {
+            // Cleanup: remove from pending requests and reset UI state
+            pendingRequests.delete(idempotencyKey);
             isSubmitting = false;
             loadingManager.hideLoading();
             enableForm();

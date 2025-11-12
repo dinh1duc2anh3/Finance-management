@@ -34,9 +34,12 @@ public class SheetConfigService {
             List<List<Object>> testRead =  googleSheetsService.readData(spreadsheetId,sheetName + "!" +range);
             System.out.println("Connection Successful: Test read data: " + testRead);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to connect to the specified Google Sheet. \n" +
+            // Log the original exception to help debugging and include the message in the thrown error
+            e.printStackTrace();
+            throw new IllegalArgumentException("Failed to connect to the specified Google Sheet.\n" +
                     "Make sure you have granted edit permission for this account \n" +
-                    "If still error though permission has been granted, please check the URL, sheet name, and range.");
+                    "If still error though permission has been granted, please check the URL, sheet name, and range.\n" +
+                    "Underlying error: " + e.getMessage());
         }
 
         String spreadsheetName = request.getSpreadsheetName();

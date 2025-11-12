@@ -1,17 +1,16 @@
 package com.darian.financemanagement.controller;
+import com.darian.financemanagement.Config;
 import com.darian.financemanagement.dto.SheetConfigRequest;
 import com.darian.financemanagement.model.SheetConfig;
 import com.darian.financemanagement.service.SheetConfigService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -40,7 +39,7 @@ public class SheetConfigController {
             response.put("message", "Sheet configured successfully");
             response.put("configId", config.getId());
             response.put("displayPeriod", config.getMonth() + "/" + config.getYear());
-            response.put("serviceAccount", "sheet-writer@finance-management.iam.gserviceaccount.com");
+            response.put("serviceAccount", Config.SERVICE_ACCOUNT_EMAIL);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put("success", false);

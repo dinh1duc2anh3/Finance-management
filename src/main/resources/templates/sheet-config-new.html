@@ -48,7 +48,7 @@
             </div>
             <div>
                 <label for="sheetName">Sheet (tab) Name</label>
-                <input id="sheetName" name="sheetName" type="text" required placeholder="test1" />
+                <input id="sheetName" name="sheetName" type="text" required placeholder="Transactions" />
                 <div class="muted mt-2">The specific worksheet tab to read/write.</div>
             </div>
         </div>
@@ -62,7 +62,13 @@
         <!-- Proactive share-access hint BEFORE connecting -->
         <div class="hint mt-4" id="shareHint">
             Share access with the service account below if needed:<br/>
-            <code>sheet-writer@finance-management.iam.gserviceaccount.com</code>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <code id="serviceAccountEmail">sheet-writer@finance-management-475508.iam.gserviceaccount.com</code>
+                <button type="button" class="ghost" id="copyEmailBtn" style="padding: 4px 8px; font-size: 12px; display: flex; align-items: center; gap: 4px;" title="Copy email">
+                    <img src="/images/clone.svg" alt="Copy" style="width: 16px; height: 16px;">
+                    Copy
+                </button>
+            </div>
         </div>
 
         <div class="row mt-6">
@@ -79,15 +85,56 @@
 <script>
     const form = document.getElementById('sheetConfigForm');
     const fillBtn = document.getElementById('fillExample');
+    const copyBtn = document.getElementById('copyEmailBtn');
     const successBox = document.getElementById('successBox');
     const errorBox = document.getElementById('errorBox');
 
+    // Copy button functionality
+    copyBtn.addEventListener('click', async () => {
+        const emailText = document.getElementById('serviceAccountEmail').textContent;
+        try {
+            await navigator.clipboard.writeText(emailText);
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<img src="/images/clone.svg" alt="Copied" style="width: 16px; height: 16px;"> Copied!';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = emailText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<img src="/images/clone.svg" alt="Copied" style="width: 16px; height: 16px;"> Copied!';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }
+    });
+
     fillBtn.addEventListener('click', () => {
-        document.getElementById('spreadSheetUrl').value =
-            'https://docs.google.com/spreadsheets/d/19exZgC-JjIYcz6O7-fHCNHYmCZwrWFBh2YNwB2My6Bw/edit?gid=0#gid=0';
-        document.getElementById('spreadsheetName').value = 'Chi tiêu 9/2025';
-        document.getElementById('sheetName').value = 'test1';
-        document.getElementById('range').value = 'A:H';
+        // Only fill fields that are currently empty
+        const urlField = document.getElementById('spreadSheetUrl');
+        const nameField = document.getElementById('spreadsheetName');
+        const sheetField = document.getElementById('sheetName');
+        const rangeField = document.getElementById('range');
+
+        if (!urlField.value.trim()) {
+            urlField.value = 'https://docs.google.com/spreadsheets/d/19exZgC-JjIYcz6O7-fHCNHYmCZwrWFBh2YNwB2My6Bw/edit?gid=0#gid=0';
+        }
+        if (!nameField.value.trim()) {
+            nameField.value = 'Chi tiêu 9/2025';
+        }
+        if (!sheetField.value.trim()) {
+            sheetField.value = 'Transactions';
+        }
+        if (!rangeField.value.trim()) {
+            rangeField.value = 'A:H';
+        }
     });
 
     function show(el, content) { el.textContent = content || ''; el.classList.remove('hidden'); }

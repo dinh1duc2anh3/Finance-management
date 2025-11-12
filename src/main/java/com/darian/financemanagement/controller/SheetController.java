@@ -54,21 +54,18 @@ public class SheetController {
             @RequestBody ExpenseRequest request,
             @RequestHeader(value = IDEMPOTENCY_KEY_HEADER, required = false) String idempotencyKey) {
 
-        if (idempotencyKey != null && !idempotencyKey.isEmpty()) {
-            String cachedResponse = idempotencyService.getCacheResponse(idempotencyKey);
-            if (cachedResponse != null) {
-                return ResponseEntity.ok("Duplicate request detected. Returning cached response: " + cachedResponse);
-            }
-        }
-
         try {
             SheetConfig cfg = resolveConfig(configId);
-            sheetsService.appendData(cfg.getSpreadsheetId(), cfg.buildFullRange(), request);
             String successMsg = "Row added successfully: " + request.getTransaction() +
                     " on " + request.getDate() + " " + request.getTime();
+            // Atomic check-and-cache to prevent race conditions
             if (idempotencyKey != null && !idempotencyKey.isEmpty()) {
-                idempotencyService.cacheResponse(idempotencyKey, successMsg);
+                String cachedResponse = idempotencyService.checkAndCacheResponse(idempotencyKey, successMsg);
+                if (cachedResponse != null) {
+                    return ResponseEntity.ok("Duplicate request detected. Returning cached response: " + cachedResponse);
+                }
             }
+            sheetsService.appendData(cfg.getSpreadsheetId(), cfg.buildFullRange(), request);
             return ResponseEntity.ok(successMsg);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
