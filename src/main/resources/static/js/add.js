@@ -369,6 +369,10 @@ function setupResetButton() {
 function resetForm() {
     elements.form.reset();
     setupDateTime();
+    // Auto focus on date field after reset
+    setTimeout(() => {
+        elements.dateInput.focus();
+    }, 100);
 }
 
 // -------------------------
